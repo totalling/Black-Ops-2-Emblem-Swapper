@@ -1,0 +1,75 @@
+@import url("https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "PT Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: #ffffff;
+  --color-fg: #000000;
+  --color-border: #e4e4e7;
+  --color-muted: #71717a;
+  --color-surface: #fafafa;
+  --color-accent: #000000;
+  --color-accent-fg: #ffffff;
+  --color-danger: #b91c1c;
+  --color-success: #15803d;
+}
+
+@media (prefers-color-scheme: dark) {
+  @theme {
+    --color-bg: #09090b;
+    --color-fg: #fafafa;
+    --color-border: #27272a;
+    --color-muted: #a1a1aa;
+    --color-surface: #131316;
+    --color-accent: #ffffff;
+    --color-accent-fg: #000000;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-fg);
+    color: var(--color-bg);
+  }
+}
+
+.pixel-icon {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+}
