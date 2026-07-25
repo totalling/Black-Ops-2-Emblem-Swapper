@@ -213,21 +213,7 @@ pub fn export_emblem(paths: &Paths, group: &str, slot: u32, dest: &Path) -> Resu
     Ok(())
 }
 
-pub fn import_emblem(
-    paths: &Paths,
-    src: &Path,
-    label: Option<&str>,
-) -> Result<EmblemInfo, AppError> {
-    let data = std::fs::read(src)?;
-
-    let body = crate::emblem::format::strip_http(&data);
-    let expected_len = crate::emblem::format::LAYER_SIZE * crate::emblem::format::NUM_LAYERS;
-    if body.len() < expected_len {
-        return Err(AppError::new(
-            "That file doesn't look like a valid emblem. It's smaller than a full 32-layer capture.",
-        ));
-    }
-
+pub fn store_new_emblem(paths: &Paths, data: &[u8], label: Option<&str>) -> Result<EmblemInfo, AppError> {
     let idx = next_group_index(paths)?;
     let group = format!("{idx:03}");
     let slot = 1u32;
@@ -248,7 +234,7 @@ pub fn import_emblem(
             labels,
         },
     )?;
-    std::fs::write(slot_path(paths, &group, slot), &data)?;
+    std::fs::write(slot_path(paths, &group, slot), data)?;
 
     Ok(EmblemInfo {
         id: format!("{group}:{slot}"),
@@ -257,6 +243,24 @@ pub fn import_emblem(
         group,
         slot,
     })
+}
+
+pub fn import_emblem(
+    paths: &Paths,
+    src: &Path,
+    label: Option<&str>,
+) -> Result<EmblemInfo, AppError> {
+    let data = std::fs::read(src)?;
+
+    let body = crate::emblem::format::strip_http(&data);
+    let expected_len = crate::emblem::format::LAYER_SIZE * crate::emblem::format::NUM_LAYERS;
+    if body.len() < expected_len {
+        return Err(AppError::new(
+            "That file doesn't look like a valid emblem. It's smaller than a full 32-layer capture.",
+        ));
+    }
+
+    store_new_emblem(paths, &data, label)
 }
 
 #[cfg(test)]

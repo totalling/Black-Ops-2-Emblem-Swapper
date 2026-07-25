@@ -1,7 +1,7 @@
 mod app_state;
 mod broadcast;
 mod commands;
-mod emblem;
+pub mod emblem;
 mod error;
 mod netinfo;
 mod paths;
