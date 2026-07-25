@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="Black Ops 2 Emblem Swapper" width="900">
+</p>
+
 # Black Ops 2 Emblem Swapper
 
 A desktop app for copying another player's Black Ops II emblem onto your own PS5 account.
@@ -11,6 +15,10 @@ Built for personal use, on your own PS5 and your own home network.
 Black Ops II fetches emblem data over plain HTTP, from Treyarch's Demonware servers. There's no encryption on that one endpoint, so a small proxy on your PC can sit between the console and the internet and watch that single request pass by.
 
 The app runs that proxy. You point your PS5's network settings at your PC's IP address, and every other request your console makes still goes straight out to the internet untouched. HTTPS traffic, including PSN sign-in and matchmaking, is tunneled through byte for byte and never decrypted. The proxy only pays attention to one thing: requests whose path matches a player's saved emblem slot.
+
+<p align="center">
+  <img src="docs/assets/architecture.svg" alt="Traffic flow: PS5 to your PC to Demonware, with everything else passing straight through" width="800">
+</p>
 
 Three modes control what happens to those requests:
 
@@ -42,6 +50,11 @@ The renderer reproduces all of this from scratch in Rust, including a hand-writt
 4. Turn on Show mode.
 5. Open your own emblem editor on the PS5. The selected emblem loads in place of whatever you'd normally see there.
 6. Save it, same as anything you made yourself.
+
+|  |  |  |
+|---|---|---|
+| ![Off mode](docs/assets/screenshot-off.png) | ![Capture mode](docs/assets/screenshot-capture.png) | ![Show mode](docs/assets/screenshot-show.png) |
+| Off | Capture | Show |
 
 Full setup, including the exact PS5 network settings screen and firewall troubleshooting, is in [docs/INSTALL.md](docs/INSTALL.md) and built into the app itself under Setup & Troubleshooting.
 
