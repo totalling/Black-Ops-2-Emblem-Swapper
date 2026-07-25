@@ -2,6 +2,8 @@ import { useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { SetupGuideModal } from "./SetupGuideModal";
 
+const GITHUB_URL = "https://github.com/totalling";
+
 const BADGES: { src: string; alt: string; href?: string }[] = [
   { src: "/footer/bestviewedopen.gif", alt: "Best viewed with open eyes" },
   { src: "/footer/bestvw.gif", alt: "This page is best viewed with: a computer and a monitor" },
@@ -45,6 +47,15 @@ export function AppFooter() {
           <p className="text-xs text-muted">
             the SQL ones are making fun of Demonware, the rest are just for fun. join the Discord
             by clicking the image
+          </p>
+          <p className="text-xs text-muted">
+            made by medisiner &middot;{" "}
+            <button
+              onClick={() => openUrl(GITHUB_URL)}
+              className="cursor-pointer border-0 bg-transparent p-0 text-xs text-muted underline hover:text-fg"
+            >
+              GitHub
+            </button>
           </p>
         </div>
 
