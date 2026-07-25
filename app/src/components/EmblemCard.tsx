@@ -61,7 +61,7 @@ export function EmblemCard({
   return (
     <div
       onClick={selectMode ? onToggleCheck : onSelect}
-      className={`group relative flex cursor-pointer flex-col gap-2 rounded-xl border p-3 transition-all ${
+      className={`group relative flex cursor-pointer flex-col gap-2 rounded-xl border p-3 transition-all active:scale-[0.98] ${
         selectMode
           ? checked
             ? "border-fg shadow-sm"
@@ -73,7 +73,7 @@ export function EmblemCard({
     >
       {selectMode ? (
         <div
-          className={`absolute right-5 top-5 z-10 flex h-6 w-6 items-center justify-center rounded-lg border ${
+          className={`absolute right-5 top-5 z-10 flex h-6 w-6 items-center justify-center rounded-lg border transition-colors ${
             checked ? "border-fg bg-fg text-bg" : "border-border bg-bg text-transparent"
           }`}
         >
@@ -81,21 +81,21 @@ export function EmblemCard({
         </div>
       ) : (
         selected && (
-          <div className="absolute right-5 top-5 z-10 flex h-6 w-6 items-center justify-center rounded-lg border border-fg bg-fg text-bg">
+          <div className="animate-fade-in absolute right-5 top-5 z-10 flex h-6 w-6 items-center justify-center rounded-lg border border-fg bg-fg text-bg">
             <IconCheck size={14} />
           </div>
         )
       )}
 
       {!selectMode && (
-        <div className="absolute left-5 top-5 z-10 flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="absolute left-5 top-5 z-10 flex items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onExport();
             }}
             title="Save a copy of this emblem to a file"
-            className="flex h-6 w-6 items-center justify-center rounded-lg border border-border bg-bg text-muted hover:text-fg"
+            className="flex h-6 w-6 items-center justify-center rounded-lg border border-border bg-bg text-muted transition-all hover:text-fg active:scale-90"
           >
             <IconExport size={12} />
           </button>
@@ -105,7 +105,7 @@ export function EmblemCard({
               onDelete();
             }}
             title="Delete this emblem"
-            className="flex h-6 w-6 items-center justify-center rounded-lg border border-border bg-bg text-muted hover:border-red-500 hover:text-red-500"
+            className="flex h-6 w-6 items-center justify-center rounded-lg border border-border bg-bg text-muted transition-all hover:border-red-500 hover:text-red-500 active:scale-90"
           >
             <IconTrash size={12} />
           </button>
@@ -114,7 +114,7 @@ export function EmblemCard({
 
       <div className="flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-surface">
         {thumb.status === "ready" && (
-          <img src={thumb.url} alt="" className="h-full w-full object-contain" />
+          <img src={thumb.url} alt="" className="animate-fade-in h-full w-full object-contain" />
         )}
         {thumb.status === "loading" && <div className="h-8 w-8 animate-pulse bg-border" />}
         {thumb.status === "error" && (

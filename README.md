@@ -10,6 +10,13 @@ You capture the emblem while looking at that player's profile, then load it into
 
 Built for personal use, on your own PS5 and your own home network.
 
+## What's new
+
+- **Find Duplicates** clears out byte-identical re-captures in one pass.
+- **Backup / Restore** zips your whole library to a file and back, additively, so restoring never overwrites what's already there.
+- **Quick Diagnostics**, under Setup & Troubleshooting, automates the proxy, LAN IP, network category, and firewall checks.
+- A larger window and a cleaner interface throughout.
+
 ## How it works
 
 Black Ops II fetches emblem data over plain HTTP, from Treyarch's Demonware servers. There's no encryption on that one endpoint, so a small proxy on your PC can sit between the console and the internet and watch that single request pass by.
@@ -63,6 +70,14 @@ Full setup, including the exact PS5 network settings screen and firewall trouble
 - Black Ops II only checks for a new emblem once per game launch. To load a different one after the first, restart the game, or switch to Zombies and back to Multiplayer.
 - If a captured emblem uses a shape, rank icon, or weapon qualification you haven't personally unlocked, the game may refuse to load or save it. That's the game enforcing it, not something this tool can work around.
 
+## Library tools
+
+A few tools around the library itself, past just capturing and showing:
+
+- **Find Duplicates** groups captures that are byte-for-byte identical (ignoring the HTTP response header, so a re-capture of the same emblem still matches) and lets you clear out the extras in one pass.
+- **Backup / Restore** zips your whole library to a single file and back. Restoring is additive: it always adds the backup's emblems as new entries rather than overwriting what's already there, so restoring the same backup twice never loses anything.
+- **Quick Diagnostics**, under Setup & Troubleshooting, checks the proxy port, LAN IP, network category, and firewall rule automatically instead of walking through them by hand.
+
 ## Architecture
 
 The app is a native Tauri window: a Rust backend handling the proxy, file storage, and rendering, talking to a React and TypeScript frontend over Tauri's IPC bridge. No web server, no browser tab, no polling loop. The Rust side pushes events to the UI the moment something happens.
@@ -76,6 +91,8 @@ app/
     src/
       proxy.rs              the MITM proxy itself
       storage.rs            captured emblems and their labels on disk
+      backup.rs             zipping the library to a file and back
+      diagnostics.rs        the automated connection checks
       broadcast.rs          which emblem is currently selected
       state.rs              current mode: off, capture, or show
       emblem/

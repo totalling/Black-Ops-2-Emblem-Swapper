@@ -1,5 +1,7 @@
+import { useState } from "react";
+import { DuplicatesModal } from "./DuplicatesModal";
 import { EmblemCard } from "./EmblemCard";
-import { IconDownload, IconInbox, IconRefresh, IconTrash } from "./icons";
+import { IconArchive, IconCopy, IconDownload, IconInbox, IconRefresh, IconTrash } from "./icons";
 import { EmptyState } from "./ui/EmptyState";
 import { SectionHeading } from "./ui/SectionHeading";
 import type { EmblemInfo, Selection } from "../lib/types";
@@ -19,6 +21,8 @@ interface Props {
   onToggleCheck: (id: string) => void;
   onToggleSelectAll: () => void;
   onBulkDelete: () => void;
+  onBackup: () => void;
+  onRestore: () => void;
 }
 
 export function EmblemGrid({
@@ -36,10 +40,13 @@ export function EmblemGrid({
   onToggleCheck,
   onToggleSelectAll,
   onBulkDelete,
+  onBackup,
+  onRestore,
 }: Props) {
   const isSelected = (e: EmblemInfo) =>
     selected != null && selected.group === e.group && selected.slot === e.slot;
   const allChecked = emblems.length > 0 && emblems.every((e) => checkedIds.has(e.id));
+  const [showDuplicates, setShowDuplicates] = useState(false);
 
   return (
     <section className="flex min-h-0 flex-1 flex-col">
@@ -51,21 +58,21 @@ export function EmblemGrid({
               <div className="flex items-center gap-2">
                 <button
                   onClick={onToggleSelectAll}
-                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-colors hover:border-fg hover:bg-surface"
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
                 >
                   {allChecked ? "Deselect all" : "Select all"}
                 </button>
                 <button
                   onClick={onBulkDelete}
                   disabled={checkedIds.size === 0}
-                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold text-red-500 transition-colors hover:border-red-500 hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border"
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold text-red-500 transition-all hover:border-red-500 hover:bg-surface active:scale-[0.96] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:active:scale-100"
                 >
                   <IconTrash size={14} />
                   Delete {checkedIds.size > 0 ? `(${checkedIds.size})` : ""}
                 </button>
                 <button
                   onClick={onToggleSelectMode}
-                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-colors hover:border-fg hover:bg-surface"
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
                 >
                   Cancel
                 </button>
@@ -74,22 +81,47 @@ export function EmblemGrid({
               <div className="flex items-center gap-2">
                 <button
                   onClick={onImport}
-                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-colors hover:border-fg hover:bg-surface"
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
                 >
                   <IconDownload size={14} />
                   Import
                 </button>
                 <button
                   onClick={onRefresh}
-                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-colors hover:border-fg hover:bg-surface"
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
                 >
                   <IconRefresh size={14} />
                   Refresh
                 </button>
+                <button
+                  onClick={onRestore}
+                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
+                >
+                  <IconArchive size={14} />
+                  Restore Backup
+                </button>
+                {emblems.length > 0 && (
+                  <button
+                    onClick={onBackup}
+                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
+                  >
+                    <IconArchive size={14} />
+                    Backup
+                  </button>
+                )}
+                {emblems.length > 0 && (
+                  <button
+                    onClick={() => setShowDuplicates(true)}
+                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
+                  >
+                    <IconCopy size={14} />
+                    Find Duplicates
+                  </button>
+                )}
                 {emblems.length > 0 && (
                   <button
                     onClick={onToggleSelectMode}
-                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-colors hover:border-fg hover:bg-surface"
+                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
                   >
                     <IconTrash size={14} />
                     Select
@@ -123,7 +155,7 @@ export function EmblemGrid({
         </div>
       ) : (
         <div className="scroll-thin mt-6 min-h-0 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4 pb-2 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="animate-fade-in grid grid-cols-2 gap-4 pb-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {emblems.map((e) => (
               <EmblemCard
                 key={e.id}
@@ -140,6 +172,13 @@ export function EmblemGrid({
             ))}
           </div>
         </div>
+      )}
+
+      {showDuplicates && (
+        <DuplicatesModal
+          onClose={() => setShowDuplicates(false)}
+          onResolved={onRefresh}
+        />
       )}
     </section>
   );

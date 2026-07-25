@@ -54,7 +54,7 @@ export function ModeSwitcher({ mode, onChange }: Props) {
             <button
               key={m}
               onClick={() => onChange(m)}
-              className={`group flex flex-col items-start gap-2 rounded-xl border p-3.5 text-left transition-all ${
+              className={`group flex flex-col items-start gap-2 rounded-xl border p-3.5 text-left transition-all active:scale-[0.98] ${
                 active
                   ? "border-fg bg-fg text-bg shadow-sm"
                   : "border-border hover:border-fg/40 hover:bg-surface"

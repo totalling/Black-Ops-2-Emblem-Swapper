@@ -36,6 +36,12 @@ impl From<tauri::Error> for AppError {
     }
 }
 
+impl From<zip::result::ZipError> for AppError {
+    fn from(e: zip::result::ZipError) -> Self {
+        AppError(format!("zip error: {e}"))
+    }
+}
+
 impl AppError {
     pub fn new(msg: impl Into<String>) -> Self {
         AppError(msg.into())

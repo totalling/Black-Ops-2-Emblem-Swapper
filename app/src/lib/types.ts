@@ -32,3 +32,11 @@ export interface EmblemRef {
   group: string;
   slot: number;
 }
+
+export type DiagnosticStatus = "ok" | "warn" | "fail" | "unknown";
+
+export interface DiagnosticCheck {
+  name: string;
+  status: DiagnosticStatus;
+  detail: string;
+}

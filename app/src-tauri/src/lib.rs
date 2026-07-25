@@ -1,6 +1,8 @@
 mod app_state;
+mod backup;
 mod broadcast;
 mod commands;
+mod diagnostics;
 pub mod emblem;
 mod error;
 mod netinfo;
@@ -62,6 +64,10 @@ pub fn run() {
             commands::get_network_info,
             commands::export_emblem,
             commands::import_emblem,
+            commands::find_duplicate_emblems,
+            commands::run_connection_diagnostics,
+            commands::backup_library,
+            commands::restore_library,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

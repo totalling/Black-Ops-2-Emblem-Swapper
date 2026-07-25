@@ -1,8 +1,16 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import type { EmblemInfo, EmblemRef, NetworkInfo, StatusResponse, PublicMode } from "./types";
+import type {
+  DiagnosticCheck,
+  EmblemInfo,
+  EmblemRef,
+  NetworkInfo,
+  StatusResponse,
+  PublicMode,
+} from "./types";
 
 const BIN_FILTER = [{ name: "Black Ops 2 Emblem", extensions: ["bin"] }];
+const BACKUP_FILTER = [{ name: "Emblem Library Backup", extensions: ["zip"] }];
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[\\/:*?"<>|]+/g, "_").trim();
@@ -38,5 +46,23 @@ export const api = {
     const srcPath = await open({ multiple: false, filters: BIN_FILTER });
     if (!srcPath) return null;
     return invoke<EmblemInfo>("import_emblem", { srcPath, label: null });
+  },
+
+  findDuplicateEmblems: () => invoke<EmblemInfo[][]>("find_duplicate_emblems"),
+  runConnectionDiagnostics: () => invoke<DiagnosticCheck[]>("run_connection_diagnostics"),
+
+  backupLibrary: async (): Promise<number | null> => {
+    const destPath = await save({
+      defaultPath: `bo2-emblem-backup-${new Date().toISOString().slice(0, 10)}.zip`,
+      filters: BACKUP_FILTER,
+    });
+    if (!destPath) return null;
+    return invoke<number>("backup_library", { destPath });
+  },
+
+  restoreLibrary: async (): Promise<number | null> => {
+    const srcPath = await open({ multiple: false, filters: BACKUP_FILTER });
+    if (!srcPath) return null;
+    return invoke<number>("restore_library", { srcPath });
   },
 };

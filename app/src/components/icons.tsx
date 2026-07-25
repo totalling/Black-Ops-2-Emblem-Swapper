@@ -113,6 +113,51 @@ export function IconExport(props: IconProps) {
   );
 }
 
+export function IconCopy(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x={4} y={8} width={12} height={12} />
+      <path d="M8 8 L8 4 L20 4 L20 16 L16 16" />
+    </Base>
+  );
+}
+
+export function IconPulse(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M3 13 L8 13 L10 7 L14 19 L16 13 L21 13" />
+    </Base>
+  );
+}
+
+export function IconArchive(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x={4} y={4} width={16} height={5} />
+      <path d="M5 9 L5 20 L19 20 L19 9" />
+      <path d="M10 13 L14 13" />
+    </Base>
+  );
+}
+
+export function IconClose(props: IconProps) {
+  return (
+    <Base strokeWidth={2.5} {...props}>
+      <path d="M5 5 L19 19" />
+      <path d="M19 5 L5 19" />
+    </Base>
+  );
+}
+
+export function IconWrench(props: IconProps) {
+  return (
+    <Base {...props}>
+      <path d="M14 4 L20 10 L17 13 L11 7 Z" />
+      <path d="M13 11 L4 20" />
+    </Base>
+  );
+}
+
 export function IconTrash(props: IconProps) {
   return (
     <Base {...props}>

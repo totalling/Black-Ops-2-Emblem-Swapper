@@ -171,6 +171,25 @@ pub fn slot_path(paths: &Paths, group: &str, slot: u32) -> std::path::PathBuf {
     paths.group_dir(group).join(format!("slot_{slot}.bin"))
 }
 
+pub fn find_duplicate_groups(paths: &Paths) -> Result<Vec<Vec<EmblemInfo>>, AppError> {
+    let emblems = list_emblems(paths)?;
+    let mut by_body: HashMap<Vec<u8>, Vec<EmblemInfo>> = HashMap::new();
+
+    for emblem in emblems {
+        let path = slot_path(paths, &emblem.group, emblem.slot);
+        let Ok(data) = std::fs::read(&path) else { continue };
+        let body = crate::emblem::format::strip_http(&data).to_vec();
+        by_body.entry(body).or_default().push(emblem);
+    }
+
+    let mut groups: Vec<Vec<EmblemInfo>> = by_body.into_values().filter(|g| g.len() > 1).collect();
+    for group in &mut groups {
+        group.sort_by(|a, b| a.captured_at.cmp(&b.captured_at));
+    }
+    groups.sort_by(|a, b| b.len().cmp(&a.len()));
+    Ok(groups)
+}
+
 pub fn slot_exists(paths: &Paths, group: &str, slot: u32) -> bool {
     Path::new(&slot_path(paths, group, slot)).exists()
 }
@@ -431,5 +450,36 @@ mod tests {
 
         let info2 = import_emblem(&paths, f.path(), Some("   ")).unwrap();
         assert_eq!(info2.label, "", "whitespace-only label should be treated as blank");
+    }
+
+    #[test]
+    fn duplicate_detection_ignores_differing_http_headers_but_matches_on_body() {
+        let (_tmp, paths) = test_paths();
+        let body = fake_captured_bytes();
+        let mut framed_a = b"HTTP/1.1 200 OK\r\nDate: Mon, 01 Jan 2026 00:00:00 GMT\r\n\r\n".to_vec();
+        framed_a.extend_from_slice(crate::emblem::format::strip_http(&body));
+        let mut framed_b = b"HTTP/1.1 200 OK\r\nDate: Tue, 02 Jan 2026 00:00:00 GMT\r\n\r\n".to_vec();
+        framed_b.extend_from_slice(crate::emblem::format::strip_http(&body));
+
+        write_slot(&paths, "001", 1, &framed_a);
+        write_slot(&paths, "002", 1, &framed_b);
+
+        let mut different_body = crate::emblem::format::strip_http(&body).to_vec();
+        different_body[0] = different_body[0].wrapping_add(1);
+        let mut framed_c = b"HTTP/1.1 200 OK\r\n\r\n".to_vec();
+        framed_c.extend_from_slice(&different_body);
+        write_slot(&paths, "003", 1, &framed_c);
+
+        let groups = find_duplicate_groups(&paths).unwrap();
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0].len(), 2);
+    }
+
+    #[test]
+    fn no_duplicates_when_every_capture_is_unique() {
+        let (_tmp, paths) = test_paths();
+        write_slot(&paths, "001", 1, &fake_captured_bytes());
+        let groups = find_duplicate_groups(&paths).unwrap();
+        assert!(groups.is_empty());
     }
 }

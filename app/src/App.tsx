@@ -136,6 +136,19 @@ function App() {
       prev.size === emblems.length ? new Set() : new Set(emblems.map((e) => e.id)),
     );
 
+  const handleBackup = () =>
+    runAction(async () => {
+      await api.backupLibrary();
+    });
+
+  const handleRestore = () =>
+    runAction(async () => {
+      const count = await api.restoreLibrary();
+      if (count !== null) {
+        await refreshEmblems();
+      }
+    });
+
   const handleBulkDelete = () =>
     runAction(async () => {
       const items = emblems
@@ -154,7 +167,7 @@ function App() {
     });
 
   return (
-    <div className="mx-auto flex h-screen max-w-screen-xl flex-col overflow-hidden">
+    <div className="mx-auto flex h-screen max-w-[1600px] flex-col overflow-hidden">
       <AppHeader networkInfo={networkInfo} />
 
       <main className="flex min-h-0 flex-1 flex-col gap-4 p-6">
@@ -177,6 +190,8 @@ function App() {
           onToggleCheck={handleToggleCheck}
           onToggleSelectAll={handleToggleSelectAll}
           onBulkDelete={handleBulkDelete}
+          onBackup={handleBackup}
+          onRestore={handleRestore}
         />
       </main>
 

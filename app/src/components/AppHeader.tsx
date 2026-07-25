@@ -5,12 +5,6 @@ interface Props {
 }
 
 export function AppHeader({ networkInfo }: Props) {
-  const setupValue = networkInfo
-    ? networkInfo.lan_ip
-      ? `${networkInfo.lan_ip} : ${networkInfo.proxy_port}`
-      : "couldn't detect, see docs/INSTALL.md"
-    : "detecting…";
-
   return (
     <header className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border px-8 py-4">
       <div className="flex items-center gap-4">
@@ -27,11 +21,21 @@ export function AppHeader({ networkInfo }: Props) {
         </div>
       </div>
 
-      <div className="rounded-xl bg-surface px-4 py-2.5 text-right">
+      <div className="rounded-xl border border-border bg-surface px-5 py-3">
         <div className="text-[10px] font-bold uppercase tracking-wider text-muted">
           PS5 proxy setting
         </div>
-        <div className="font-bold tabular-nums">{setupValue}</div>
+        {!networkInfo ? (
+          <div className="text-sm text-muted">detecting…</div>
+        ) : networkInfo.lan_ip ? (
+          <div className="font-mono text-base font-bold tracking-tight tabular-nums">
+            {networkInfo.lan_ip}
+            <span className="mx-1 text-muted">:</span>
+            {networkInfo.proxy_port}
+          </div>
+        ) : (
+          <div className="text-sm text-muted">couldn&apos;t detect, see docs/INSTALL.md</div>
+        )}
       </div>
     </header>
   );

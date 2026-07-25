@@ -37,6 +37,26 @@ pub fn list_emblems(state: State<AppState>) -> Result<Vec<EmblemInfo>, String> {
 }
 
 #[tauri::command]
+pub fn find_duplicate_emblems(state: State<AppState>) -> Result<Vec<Vec<EmblemInfo>>, String> {
+    crate::storage::find_duplicate_groups(&state.paths).map_err(|e| e.0)
+}
+
+#[tauri::command]
+pub async fn run_connection_diagnostics() -> Vec<crate::diagnostics::DiagnosticCheck> {
+    crate::diagnostics::run().await
+}
+
+#[tauri::command]
+pub fn backup_library(dest_path: String, state: State<AppState>) -> Result<usize, String> {
+    crate::backup::export_library(&state.paths, &PathBuf::from(dest_path)).map_err(|e| e.0)
+}
+
+#[tauri::command]
+pub fn restore_library(src_path: String, state: State<AppState>) -> Result<usize, String> {
+    crate::backup::import_library(&state.paths, &PathBuf::from(src_path)).map_err(|e| e.0)
+}
+
+#[tauri::command]
 pub fn render_emblem_png(group: String, slot: u32, state: State<AppState>) -> Result<String, String> {
     let path = crate::storage::slot_path(&state.paths, &group, slot);
     if !path.exists() {

@@ -13,8 +13,8 @@ interface Props {
 
 export function NoticeList({ heading, items }: Props) {
   return (
-    <div className="mt-4 border-l-2 border-fg/40 py-1 pl-4">
-      <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight">
+    <div className="mt-4">
+      <h3 className="flex items-center gap-2 text-sm font-bold tracking-tight text-muted">
         <IconInfo size={15} />
         {heading}
       </h3>
