@@ -1,6 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { confirm } from "@tauri-apps/plugin-dialog";
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from "@tauri-apps/plugin-notification";
 import { api } from "./lib/api";
 import type { EmblemCapturedPayload, EmblemInfo, NetworkInfo, PublicMode, Selection } from "./lib/types";
 import { AppHeader } from "./components/AppHeader";
@@ -8,6 +13,21 @@ import { ModeSwitcher } from "./components/ModeSwitcher";
 import { EmblemGrid } from "./components/EmblemGrid";
 import { AppFooter } from "./components/AppFooter";
 import { ErrorToast } from "./components/ui/ErrorToast";
+
+const CAPTURE_NOTIFY_DELAY_MS = 2500;
+
+async function sendCaptureNotification(count: number) {
+  let granted = await isPermissionGranted();
+  if (!granted) {
+    granted = (await requestPermission()) === "granted";
+  }
+  if (!granted) return;
+  sendNotification(
+    count === 1
+      ? { title: "Emblem captured", body: "Saved to your library." }
+      : { title: `${count} emblems captured`, body: "Saved to your library." },
+  );
+}
 
 function errorMessage(e: unknown): string {
   if (typeof e === "string") return e;
@@ -50,12 +70,24 @@ function App() {
     runAction(refreshEmblems);
   }, [runAction, refreshStatus, refreshEmblems]);
 
+  const pendingCaptureCount = useRef(0);
+  const captureNotifyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     const unlisten = listen<EmblemCapturedPayload>("emblem-captured", () => {
       runAction(refreshEmblems);
+
+      pendingCaptureCount.current += 1;
+      if (captureNotifyTimer.current) clearTimeout(captureNotifyTimer.current);
+      captureNotifyTimer.current = setTimeout(() => {
+        sendCaptureNotification(pendingCaptureCount.current);
+        pendingCaptureCount.current = 0;
+        captureNotifyTimer.current = null;
+      }, CAPTURE_NOTIFY_DELAY_MS);
     });
     return () => {
       unlisten.then((fn) => fn());
+      if (captureNotifyTimer.current) clearTimeout(captureNotifyTimer.current);
     };
   }, [runAction, refreshEmblems]);
 

@@ -12,6 +12,7 @@ Built for personal use, on your own PS5 and your own home network.
 
 ## What's new
 
+- **Capture notifications** pop up as native Windows toasts the moment an emblem lands in your library, bundled into one if several land in a burst.
 - **Find Duplicates** clears out byte-identical re-captures in one pass.
 - **Backup / Restore** zips your whole library to a file and back, additively, so restoring never overwrites what's already there.
 - **Quick Diagnostics**, under Setup & Troubleshooting, automates the proxy, LAN IP, network category, and firewall checks.

@@ -5,7 +5,7 @@ import { IconCheck, IconExport, IconInfo, IconTrash } from "./icons";
 
 function fmtDate(s: string): string {
   if (!s) return "";
-  return s.replace(" ", " · ").slice(0, 16);
+  return s.slice(0, 16).replace(" ", " · ");
 }
 
 interface Props {
@@ -128,12 +128,13 @@ export function EmblemCard({
       <input
         value={label}
         placeholder={placeholder}
+        title={label || placeholder}
         onClick={(e) => e.stopPropagation()}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={() => {
           if (label !== emblem.label) onLabelChange(label);
         }}
-        className="w-full border-b border-transparent bg-transparent text-sm font-bold tracking-tight outline-none placeholder:text-muted placeholder:font-normal focus:border-border"
+        className="w-full truncate border-b border-transparent bg-transparent text-sm font-bold tracking-tight outline-none placeholder:text-muted placeholder:font-normal focus:border-border"
       />
     </div>
   );
