@@ -18,7 +18,7 @@ export function AppFooter() {
 
   return (
     <>
-      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-6 border-t border-border px-8 py-5">
+      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-6 border-t border-border px-4 py-5 sm:px-8">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-4">
             {BADGES.map((badge) =>

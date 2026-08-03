@@ -199,10 +199,10 @@ function App() {
     });
 
   return (
-    <div className="mx-auto flex h-screen max-w-[1600px] flex-col overflow-hidden">
+    <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col lg:h-screen lg:overflow-hidden">
       <AppHeader networkInfo={networkInfo} />
 
-      <main className="flex min-h-0 flex-1 flex-col gap-4 p-6">
+      <main className="flex flex-col gap-4 p-4 sm:p-6 lg:min-h-0 lg:flex-1">
         <div className="shrink-0">
           <ModeSwitcher mode={mode} onChange={handleModeChange} />
         </div>

@@ -117,6 +117,58 @@ npm run tauri dev
 
 `npm run tauri build` produces a standalone installer under `app/src-tauri/target/release/bundle`.
 
+## Android
+
+The same codebase builds as an Android APK, so the proxy can run on a phone instead of a PC. You'll need [Android Studio](https://developer.android.com/studio) (SDK + NDK installed), a JDK, and the Rust Android targets:
+
+```
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+```
+
+Build the release bundles (signed automatically with the release keystore, see below):
+
+```
+cd app
+npm run tauri android build --apk --aab
+```
+
+Outputs land under `app/src-tauri/gen/android/app/build/outputs/`: the **APK** (`apk/universal/release/`) is for direct distribution and sideloading; the **AAB** (`bundle/release/`) is what the Play Store requires.
+
+### Release signing
+
+Distributed builds are signed with the release keystore at `app/android-upload.keystore`. Its credentials live in `app/src-tauri/gen/android/keystore.properties`, and both files are gitignored. **Back both up somewhere safe** — every future update must be signed with this same key, and if it's lost, existing installs can never be updated (users would have to uninstall and lose their data). If `keystore.properties` is missing, the build falls back to an unsigned release APK.
+
+A phone with a debug-signed build installed can't update to the release-signed build (different signature) — uninstall the old one first.
+
+### Testing without distribution
+
+For quick local testing you can also sign an unsigned build with your Android debug key (created automatically by Android Studio, usually at `%USERPROFILE%\.android\debug.keystore`):
+
+```
+zipalign -f 4 app-universal-release-unsigned.apk aligned.apk
+apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --out bo2-emblem-swapper-1.0.0.apk aligned.apk
+```
+
+`zipalign` and `apksigner` ship with the Android SDK under `build-tools/<version>/`.
+
+### On a phone
+
+The APK supports Android 7.0+ and all common CPU architectures. Copy it to the phone and install it (allowing "unknown sources" when prompted), or install over USB with `adb install bo2-emblem-swapper-1.0.0.apk`. The phone just needs to be on the same Wi-Fi as the PS5: the app shows the phone's real LAN IP, and that IP with port `8080` goes into the PS5's proxy settings. Keep the app in the foreground while capturing — Android suspends background apps, which would stop the proxy mid-session.
+
+### On the Android emulator
+
+The emulator sits behind its own NAT, so the IP it shows (`10.0.2.16`) is unreachable from a real PS5. To test the proxy for real from the emulator, forward the port through the host PC:
+
+```
+adb forward tcp:8080 tcp:8080
+netsh interface portproxy add v4tov4 listenaddress=<PC LAN IP> listenport=8080 connectaddress=127.0.0.1 connectport=8080
+netsh advfirewall firewall add rule name="BO2 Emblem Proxy (emulator)" dir=in action=allow protocol=TCP localport=8080
+```
+
+Then point the PS5 at the PC's LAN IP, port `8080`. Traffic flows PS5 → PC → emulator → the internet. Remove the forwarding afterwards with `netsh interface portproxy delete v4tov4 listenaddress=<PC LAN IP> listenport=8080` and by deleting the firewall rule. Note the emulator needs hardware acceleration enabled (SVM/VT-x in BIOS, plus the AEHD driver or Windows Hypervisor Platform).
+
+Emblems captured on Android live in that app's own storage, separate from the desktop library. Use Export or Backup to move them.
+
 ## Scope
 
 This only intercepts Black Ops II's own emblem-storage requests. Everything else passes through unmodified, including PSN authentication, which stays encrypted the whole time. Emblem data isn't private: it's the same thing already displayed on other players in-game. This project isn't affiliated with Activision, Treyarch, or Sony.

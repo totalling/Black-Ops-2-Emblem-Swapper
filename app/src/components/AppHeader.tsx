@@ -6,12 +6,12 @@ interface Props {
 
 export function AppHeader({ networkInfo }: Props) {
   return (
-    <header className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border px-8 py-4">
+    <header className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-border px-4 py-3 sm:px-8 sm:py-4">
       <div className="flex items-center gap-4">
         <img
           src="/bo2ripperlogo.png"
           alt=""
-          className="h-24 w-24 object-contain invert dark:invert-0"
+          className="h-16 w-16 object-contain invert sm:h-24 sm:w-24 dark:invert-0"
         />
         <div>
           <h1 className="text-lg font-bold tracking-tight">Black Ops 2 Emblem Swapper</h1>

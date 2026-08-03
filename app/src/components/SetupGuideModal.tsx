@@ -131,7 +131,7 @@ function DiagnosticsPanel() {
 export function SetupGuideModal({ onClose }: Props) {
   return (
     <div
-      className="animate-overlay-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-8 backdrop-blur-sm"
+      className="animate-overlay-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm sm:p-8"
       onClick={onClose}
     >
       <div

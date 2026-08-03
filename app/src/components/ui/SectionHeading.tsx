@@ -7,7 +7,7 @@ interface Props {
 
 export function SectionHeading({ title, action }: Props) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-wrap items-center justify-between gap-2">
       <h2 className="text-base font-bold tracking-tight">{title}</h2>
       {action}
     </div>

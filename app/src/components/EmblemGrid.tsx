@@ -49,13 +49,13 @@ export function EmblemGrid({
   const [showDuplicates, setShowDuplicates] = useState(false);
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col">
+    <section className="flex flex-col lg:min-h-0 lg:flex-1">
       <div className="shrink-0">
         <SectionHeading
           title="Your captured emblems"
           action={
             selectMode ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={onToggleSelectAll}
                   className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
@@ -78,7 +78,7 @@ export function EmblemGrid({
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={onImport}
                   className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-bold transition-all hover:border-fg hover:bg-surface active:scale-[0.96]"
@@ -140,7 +140,7 @@ export function EmblemGrid({
       </div>
 
       {emblems.length === 0 ? (
-        <div className="mt-6 min-h-0 flex-1">
+        <div className="mt-6 lg:min-h-0 lg:flex-1">
           <EmptyState
             icon={<IconInbox size={20} />}
             title="Nothing captured yet"
@@ -154,7 +154,7 @@ export function EmblemGrid({
           />
         </div>
       ) : (
-        <div className="scroll-thin mt-6 min-h-0 flex-1 overflow-y-auto">
+        <div className="scroll-thin mt-6 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           <div className="animate-fade-in grid grid-cols-2 gap-4 pb-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {emblems.map((e) => (
               <EmblemCard
