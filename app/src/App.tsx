@@ -199,7 +199,7 @@ function App() {
     });
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col lg:h-screen lg:overflow-hidden">
+    <div className="safe-area mx-auto flex min-h-screen max-w-[1600px] flex-col lg:h-screen lg:overflow-hidden">
       <AppHeader networkInfo={networkInfo} />
 
       <main className="flex flex-col gap-4 p-4 sm:p-6 lg:min-h-0 lg:flex-1">

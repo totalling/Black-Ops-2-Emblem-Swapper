@@ -5,7 +5,7 @@ interface Props {
 
 export function ErrorToast({ message, onDismiss }: Props) {
   return (
-    <div className="animate-toast-in fixed bottom-6 left-1/2 z-50 flex max-w-md items-start gap-3 rounded-xl border border-fg bg-bg p-4 shadow-lg">
+    <div className="animate-toast-in fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-1/2 z-50 flex max-w-md items-start gap-3 rounded-xl border border-fg bg-bg p-4 shadow-lg">
       <p className="text-sm">
         <strong className="text-fg">Something went wrong.</strong>{" "}
         <span className="text-muted">{message}</span>

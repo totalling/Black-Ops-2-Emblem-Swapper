@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -46,14 +44,25 @@ pub async fn run_connection_diagnostics() -> Vec<crate::diagnostics::DiagnosticC
     crate::diagnostics::run().await
 }
 
-#[tauri::command]
-pub fn backup_library(dest_path: String, state: State<AppState>) -> Result<usize, String> {
-    crate::backup::export_library(&state.paths, &PathBuf::from(dest_path)).map_err(|e| e.0)
+#[derive(Debug, Serialize)]
+pub struct BackupResult {
+    count: usize,
+    data: String,
 }
 
 #[tauri::command]
-pub fn restore_library(src_path: String, state: State<AppState>) -> Result<usize, String> {
-    crate::backup::import_library(&state.paths, &PathBuf::from(src_path)).map_err(|e| e.0)
+pub fn backup_library(state: State<AppState>) -> Result<BackupResult, String> {
+    let (count, bytes) = crate::backup::export_library(&state.paths).map_err(|e| e.0)?;
+    let data = base64::engine::general_purpose::STANDARD.encode(bytes);
+    Ok(BackupResult { count, data })
+}
+
+#[tauri::command]
+pub fn restore_library(data: String, state: State<AppState>) -> Result<usize, String> {
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|e| format!("invalid backup data: {e}"))?;
+    crate::backup::import_library(&state.paths, &bytes).map_err(|e| e.0)
 }
 
 #[tauri::command]
@@ -124,27 +133,25 @@ pub fn delete_emblems(items: Vec<EmblemRef>, state: State<AppState>) -> Result<(
 }
 
 #[tauri::command]
-pub fn export_emblem(
-    group: String,
-    slot: u32,
-    dest_path: String,
-    state: State<AppState>,
-) -> Result<(), String> {
+pub fn export_emblem(group: String, slot: u32, state: State<AppState>) -> Result<String, String> {
     if !crate::storage::slot_exists(&state.paths, &group, slot) {
         return Err("not found".to_string());
     }
-    crate::storage::export_emblem(&state.paths, &group, slot, &PathBuf::from(dest_path))
-        .map_err(|e| e.0)
+    let bytes =
+        crate::storage::export_emblem_bytes(&state.paths, &group, slot).map_err(|e| e.0)?;
+    Ok(base64::engine::general_purpose::STANDARD.encode(bytes))
 }
 
 #[tauri::command]
 pub fn import_emblem(
-    src_path: String,
+    data: String,
     label: Option<String>,
     state: State<AppState>,
 ) -> Result<EmblemInfo, String> {
-    crate::storage::import_emblem(&state.paths, &PathBuf::from(src_path), label.as_deref())
-        .map_err(|e| e.0)
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(data)
+        .map_err(|e| format!("invalid emblem data: {e}"))?;
+    crate::storage::import_emblem(&state.paths, &bytes, label.as_deref()).map_err(|e| e.0)
 }
 
 #[derive(Debug, Serialize)]

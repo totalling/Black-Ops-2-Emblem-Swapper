@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
+import { readFile, writeFile } from "@tauri-apps/plugin-fs";
 import type {
   DiagnosticCheck,
   EmblemInfo,
@@ -14,6 +15,29 @@ const BACKUP_FILTER = [{ name: "Emblem Library Backup", extensions: ["zip"] }];
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[\\/:*?"<>|]+/g, "_").trim();
+}
+
+// The save/open dialogs can hand back an Android `content://` URI instead of
+// a real filesystem path, which Rust's std::fs can't read or write directly.
+// Bytes are moved across the Tauri IPC boundary as base64 and the actual
+// file I/O against the picked location goes through the fs plugin, which
+// knows how to talk to Android's Storage Access Framework.
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
 
 export const api = {
@@ -38,14 +62,16 @@ export const api = {
       filters: BIN_FILTER,
     });
     if (!destPath) return false;
-    await invoke<void>("export_emblem", { group: emblem.group, slot: emblem.slot, destPath });
+    const data = await invoke<string>("export_emblem", { group: emblem.group, slot: emblem.slot });
+    await writeFile(destPath, base64ToBytes(data));
     return true;
   },
 
   importEmblem: async (): Promise<EmblemInfo | null> => {
     const srcPath = await open({ multiple: false, filters: BIN_FILTER });
     if (!srcPath) return null;
-    return invoke<EmblemInfo>("import_emblem", { srcPath, label: null });
+    const bytes = await readFile(srcPath);
+    return invoke<EmblemInfo>("import_emblem", { data: bytesToBase64(bytes), label: null });
   },
 
   findDuplicateEmblems: () => invoke<EmblemInfo[][]>("find_duplicate_emblems"),
@@ -57,12 +83,15 @@ export const api = {
       filters: BACKUP_FILTER,
     });
     if (!destPath) return null;
-    return invoke<number>("backup_library", { destPath });
+    const result = await invoke<{ count: number; data: string }>("backup_library");
+    await writeFile(destPath, base64ToBytes(result.data));
+    return result.count;
   },
 
   restoreLibrary: async (): Promise<number | null> => {
     const srcPath = await open({ multiple: false, filters: BACKUP_FILTER });
     if (!srcPath) return null;
-    return invoke<number>("restore_library", { srcPath });
+    const bytes = await readFile(srcPath);
+    return invoke<number>("restore_library", { data: bytesToBase64(bytes) });
   },
 };

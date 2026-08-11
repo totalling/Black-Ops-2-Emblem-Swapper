@@ -267,6 +267,7 @@ async fn handle_target_request(
                     if let Err(e) = std::fs::write(&path, &combined) {
                         log(&format!("  error saving capture: {e}"));
                     } else {
+                        crate::storage::invalidate_thumb_cache(paths, &group, *slot_num);
                         log(&format!(
                             "  Captured: group {group} slot_{slot_num} ({} bytes)",
                             body.len()

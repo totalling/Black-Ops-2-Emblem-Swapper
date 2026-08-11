@@ -194,12 +194,7 @@ pub fn slot_exists(paths: &Paths, group: &str, slot: u32) -> bool {
     Path::new(&slot_path(paths, group, slot)).exists()
 }
 
-pub fn delete_emblem(paths: &Paths, group: &str, slot: u32) -> Result<(), AppError> {
-    let path = slot_path(paths, group, slot);
-    if path.exists() {
-        std::fs::remove_file(&path)?;
-    }
-
+pub fn invalidate_thumb_cache(paths: &Paths, group: &str, slot: u32) {
     let dir = paths.group_dir(group);
     let thumb_prefix = format!("thumb_{slot}_");
     if let Ok(entries) = std::fs::read_dir(&dir) {
@@ -211,9 +206,18 @@ pub fn delete_emblem(paths: &Paths, group: &str, slot: u32) -> Result<(), AppErr
             }
         }
     }
+}
+
+pub fn delete_emblem(paths: &Paths, group: &str, slot: u32) -> Result<(), AppError> {
+    let path = slot_path(paths, group, slot);
+    if path.exists() {
+        std::fs::remove_file(&path)?;
+    }
+
+    invalidate_thumb_cache(paths, group, slot);
 
     if group_slots(paths, group).is_empty() {
-        let _ = std::fs::remove_dir_all(&dir);
+        let _ = std::fs::remove_dir_all(paths.group_dir(group));
     } else {
         let mut meta = read_meta(paths, group)?.unwrap_or_default();
         meta.labels.remove(&slot.to_string());
@@ -226,10 +230,8 @@ pub fn thumb_cache_path(paths: &Paths, group: &str, slot: u32, size: u32) -> std
     paths.group_dir(group).join(format!("thumb_{slot}_{size}.png"))
 }
 
-pub fn export_emblem(paths: &Paths, group: &str, slot: u32, dest: &Path) -> Result<(), AppError> {
-    let data = std::fs::read(slot_path(paths, group, slot))?;
-    std::fs::write(dest, data)?;
-    Ok(())
+pub fn export_emblem_bytes(paths: &Paths, group: &str, slot: u32) -> Result<Vec<u8>, AppError> {
+    Ok(std::fs::read(slot_path(paths, group, slot))?)
 }
 
 pub fn store_new_emblem(paths: &Paths, data: &[u8], label: Option<&str>) -> Result<EmblemInfo, AppError> {
@@ -266,12 +268,10 @@ pub fn store_new_emblem(paths: &Paths, data: &[u8], label: Option<&str>) -> Resu
 
 pub fn import_emblem(
     paths: &Paths,
-    src: &Path,
+    data: &[u8],
     label: Option<&str>,
 ) -> Result<EmblemInfo, AppError> {
-    let data = std::fs::read(src)?;
-
-    let body = crate::emblem::format::strip_http(&data);
+    let body = crate::emblem::format::strip_http(data);
     let expected_len = crate::emblem::format::LAYER_SIZE * crate::emblem::format::NUM_LAYERS;
     if body.len() < expected_len {
         return Err(AppError::new(
@@ -279,7 +279,7 @@ pub fn import_emblem(
         ));
     }
 
-    store_new_emblem(paths, &data, label)
+    store_new_emblem(paths, data, label)
 }
 
 #[cfg(test)]
@@ -366,6 +366,22 @@ mod tests {
     }
 
     #[test]
+    fn invalidate_thumb_cache_removes_only_the_matching_slots_thumbs() {
+        let (_tmp, paths) = test_paths();
+        write_slot(&paths, "001", 1, b"data");
+        let dir = paths.group_dir("001");
+        std::fs::write(dir.join("thumb_1_220.png"), b"stale").unwrap();
+        std::fs::write(dir.join("thumb_1_64.png"), b"stale").unwrap();
+        std::fs::write(dir.join("thumb_10_220.png"), b"unrelated").unwrap();
+
+        invalidate_thumb_cache(&paths, "001", 1);
+
+        assert!(!dir.join("thumb_1_220.png").exists());
+        assert!(!dir.join("thumb_1_64.png").exists());
+        assert!(dir.join("thumb_10_220.png").exists(), "other slots' thumbs should survive");
+    }
+
+    #[test]
     fn list_emblems_sorts_newest_captured_first() {
         let (_tmp, paths) = test_paths();
         write_slot(&paths, "001", 1, b"a");
@@ -408,13 +424,11 @@ mod tests {
         let original = fake_captured_bytes();
         write_slot(&src_paths, "001", 7, &original);
 
-        let export_dir = tempfile::tempdir().unwrap();
-        let export_path = export_dir.path().join("exported.bin");
-        export_emblem(&src_paths, "001", 7, &export_path).unwrap();
-        assert_eq!(std::fs::read(&export_path).unwrap(), original);
+        let exported = export_emblem_bytes(&src_paths, "001", 7).unwrap();
+        assert_eq!(exported, original);
 
         let (_tmp_dest, dest_paths) = test_paths();
-        let info = import_emblem(&dest_paths, &export_path, Some("Imported dragon")).unwrap();
+        let info = import_emblem(&dest_paths, &exported, Some("Imported dragon")).unwrap();
         assert_eq!(info.slot, 1);
         assert_eq!(info.label, "Imported dragon");
         assert_eq!(
@@ -430,10 +444,8 @@ mod tests {
     #[test]
     fn import_rejects_files_that_are_too_small_to_be_an_emblem() {
         let (_tmp, paths) = test_paths();
-        let bogus = tempfile::NamedTempFile::new().unwrap();
-        std::fs::write(bogus.path(), b"not an emblem").unwrap();
 
-        let err = import_emblem(&paths, bogus.path(), None).unwrap_err();
+        let err = import_emblem(&paths, b"not an emblem", None).unwrap_err();
         assert!(err.0.contains("doesn't look like a valid emblem"));
         assert!(list_groups(&paths).unwrap().is_empty());
     }
@@ -442,13 +454,11 @@ mod tests {
     fn import_without_a_label_leaves_it_blank() {
         let (_tmp, paths) = test_paths();
         let bytes = fake_captured_bytes();
-        let f = tempfile::NamedTempFile::new().unwrap();
-        std::fs::write(f.path(), &bytes).unwrap();
 
-        let info = import_emblem(&paths, f.path(), None).unwrap();
+        let info = import_emblem(&paths, &bytes, None).unwrap();
         assert_eq!(info.label, "");
 
-        let info2 = import_emblem(&paths, f.path(), Some("   ")).unwrap();
+        let info2 = import_emblem(&paths, &bytes, Some("   ")).unwrap();
         assert_eq!(info2.label, "", "whitespace-only label should be treated as blank");
     }
 

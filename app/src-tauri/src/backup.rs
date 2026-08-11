@@ -1,14 +1,12 @@
 use std::collections::BTreeMap;
-use std::io::{Read, Write};
-use std::path::Path;
+use std::io::{Cursor, Read, Write};
 
 use crate::error::AppError;
 use crate::paths::{Paths, ACTIVE_NAME};
 use crate::storage::{self, GroupMeta};
 
-pub fn export_library(paths: &Paths, dest: &Path) -> Result<usize, AppError> {
-    let file = std::fs::File::create(dest)?;
-    let mut zip = zip::ZipWriter::new(file);
+pub fn export_library(paths: &Paths) -> Result<(usize, Vec<u8>), AppError> {
+    let mut zip = zip::ZipWriter::new(Cursor::new(Vec::new()));
     let options =
         zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
 
@@ -30,13 +28,12 @@ pub fn export_library(paths: &Paths, dest: &Path) -> Result<usize, AppError> {
             }
         }
     }
-    zip.finish()?;
-    Ok(count)
+    let cursor = zip.finish()?;
+    Ok((count, cursor.into_inner()))
 }
 
-pub fn import_library(paths: &Paths, src: &Path) -> Result<usize, AppError> {
-    let file = std::fs::File::open(src)?;
-    let mut archive = zip::ZipArchive::new(file)
+pub fn import_library(paths: &Paths, data: &[u8]) -> Result<usize, AppError> {
+    let mut archive = zip::ZipArchive::new(Cursor::new(data))
         .map_err(|e| AppError::new(format!("That doesn't look like a valid backup file: {e}")))?;
 
     let mut by_group: BTreeMap<String, (Option<GroupMeta>, Vec<(u32, Vec<u8>)>)> = BTreeMap::new();
@@ -111,15 +108,13 @@ mod tests {
         write_slot(&src_paths, "001", 2, b"emblem-b-bytes");
         storage::set_emblem_label(&src_paths, "001", 1, "Dragon").unwrap();
 
-        let zip_dir = tempfile::tempdir().unwrap();
-        let zip_path = zip_dir.path().join("backup.zip");
-        let exported = export_library(&src_paths, &zip_path).unwrap();
+        let (exported, zip_bytes) = export_library(&src_paths).unwrap();
         assert_eq!(exported, 2);
 
         let (_tmp_dest, dest_paths) = test_paths();
         write_slot(&dest_paths, "001", 1, b"unrelated-existing-emblem");
 
-        let imported = import_library(&dest_paths, &zip_path).unwrap();
+        let imported = import_library(&dest_paths, &zip_bytes).unwrap();
         assert_eq!(imported, 2);
 
         let emblems = storage::list_emblems(&dest_paths).unwrap();
@@ -141,10 +136,9 @@ mod tests {
     #[test]
     fn backup_of_empty_library_produces_zero_count() {
         let (_tmp, paths) = test_paths();
-        let zip_dir = tempfile::tempdir().unwrap();
-        let zip_path = zip_dir.path().join("backup.zip");
-        assert_eq!(export_library(&paths, &zip_path).unwrap(), 0);
-        assert_eq!(import_library(&paths, &zip_path).unwrap(), 0);
+        let (count, zip_bytes) = export_library(&paths).unwrap();
+        assert_eq!(count, 0);
+        assert_eq!(import_library(&paths, &zip_bytes).unwrap(), 0);
         assert!(storage::list_emblems(&paths).unwrap().is_empty());
     }
 
@@ -163,12 +157,10 @@ mod tests {
         )
         .unwrap();
 
-        let zip_dir = tempfile::tempdir().unwrap();
-        let zip_path = zip_dir.path().join("backup.zip");
-        export_library(&src_paths, &zip_path).unwrap();
+        let (_, zip_bytes) = export_library(&src_paths).unwrap();
 
         let (_tmp_dest, dest_paths) = test_paths();
-        import_library(&dest_paths, &zip_path).unwrap();
+        import_library(&dest_paths, &zip_bytes).unwrap();
         let emblems = storage::list_emblems(&dest_paths).unwrap();
         assert_eq!(emblems.len(), 1);
         assert_eq!(emblems[0].label, "");

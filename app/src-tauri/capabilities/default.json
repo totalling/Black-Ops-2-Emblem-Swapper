@@ -7,6 +7,9 @@
     "core:default",
     "opener:default",
     "dialog:default",
-    "notification:default"
+    "notification:default",
+    "fs:default",
+    "fs:allow-read-file",
+    "fs:allow-write-file"
   ]
 }
